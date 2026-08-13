@@ -461,9 +461,11 @@ export default function App() {
           display: flex;
           flex-direction: column;
           align-items: center;
-          justify-content: center;
+          justify-content: flex-start;
           padding: 24px 16px;
           text-align: center;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
         }
 
         .menu-title {
@@ -479,7 +481,7 @@ export default function App() {
         .menu-subtitle {
           font-size: 0.85rem;
           color: var(--gold-line);
-          margin-bottom: 0;
+          margin-bottom: 32px;
           text-transform: uppercase;
           letter-spacing: 0.15em;
         }
@@ -487,7 +489,7 @@ export default function App() {
         .mode-cards-container {
           display: flex;
           flex-direction: column;
-          gap: 20px;
+          gap: 16px;
           width: 100%;
           max-width: 320px;
         }
@@ -1091,63 +1093,105 @@ export default function App() {
       {/* HOME / MENU OVERLAY */}
       {showMenu && (
         <div className="menu-overlay">
-          <div className="pt-4 text-center">
-            <h1 className="menu-title">SHOLO GUTI</h1>
-            <div className="menu-subtitle">16 BEAD STRATEGY BOARD GAME</div>
-          </div>
+          {/* First screen view - 100% identical original layout & positioning */}
+          <div className="w-full min-h-full flex flex-col items-center justify-between shrink-0 py-6 px-4">
+            {/* Header at Top */}
+            <div className="text-center pt-2">
+              <h1 className="menu-title">SHOLO GUTI</h1>
+              <div className="menu-subtitle">16 BEAD STRATEGY BOARD GAME</div>
+            </div>
 
-          <div className="my-auto w-full flex flex-col items-center py-4">
-            <div className="mode-cards-container">
-              <div className="mode-card" onClick={() => startGame('vs_computer')}>
-                <div className="mode-icon">
-                  <SingleUserIcon />
+            {/* Mode Cards in Middle */}
+            <div className="w-full flex flex-col items-center my-auto py-2">
+              <div className="mode-cards-container">
+                <div className="mode-card" onClick={() => startGame('vs_computer')}>
+                  <div className="mode-icon">
+                    <SingleUserIcon />
+                  </div>
+                  <div className="mode-info">
+                    <div className="mode-name">Play vs Computer</div>
+                    <div className="mode-desc">Single player game against intelligent AI Bot</div>
+                  </div>
                 </div>
-                <div className="mode-info">
-                  <div className="mode-name">Play vs Computer</div>
-                  <div className="mode-desc">Single player game against intelligent AI Bot</div>
+
+                <div className="mode-card" onClick={() => startGame('vs_friend')}>
+                  <div className="mode-icon">
+                    <TwoUsersIcon />
+                  </div>
+                  <div className="mode-info">
+                    <div className="mode-name">Pass & Play (vs Friend)</div>
+                    <div className="mode-desc">2 Players on same device, take turns tapping</div>
+                  </div>
                 </div>
               </div>
 
-              <div className="mode-card" onClick={() => startGame('vs_friend')}>
-                <div className="mode-icon">
-                  <TwoUsersIcon />
-                </div>
-                <div className="mode-info">
-                  <div className="mode-name">Pass & Play (vs Friend)</div>
-                  <div className="mode-desc">2 Players on same device, take turns tapping</div>
-                </div>
+              <div className="w-full max-w-[320px] flex justify-start mt-3">
+                <a
+                  href="https://chatgpt.com/?prompt=Please+search+https%3A%2F%2F16-bead-game.raxzen.in%2F+and+search+%2216+Bead%22+or+%2216+Ghuti%22.+Give+me+a+short%2C+clean%2C+point-to-point+answer+covering%3A+1.+What+the+game+is%2C+2.+Rules%2C+3.+How+to+play%2C+4.+Piece+movement%2C+5.+Capturing%2C+6.+How+to+win%2C+7.+Key+strategies%2C+8.+Main+features%2C+9.+Future+potential.+Use+only+verified+information.+Keep+each+point+brief+and+do+not+give+a+long+explanation."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rule-preview-chatgpt"
+                  title="Ask ChatGPT for 16 Bead Game Rules"
+                >
+                  <div className="chatgpt-logo-wrap">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                      <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558l-5.8144-3.3543 2.0201-1.1685a.0757.0757 0 0 1 .071 0l4.8303 2.7865a4.4944 4.4944 0 0 1-.5015 8.1001v-5.6868a.7853.7853 0 0 0-.6055-.677zm2.2992-3.1332l-.142-.0852-4.783-2.7582a.7712.7712 0 0 0-.7806 0l-5.8428 3.3685v-2.3324a.0804.0804 0 0 1 .0332-.0615l4.816-2.7818a4.4992 4.4992 0 0 1 6.6754 4.6508zm-12.0158-5.732a4.4755 4.4755 0 0 1 2.8764 1.0408l-.1419.0804-4.7783 2.7582a.7948.7948 0 0 0-.3927.6813v6.7369l-2.02-1.1686a.071.071 0 0 1-.038-.052V6.7571A4.504 4.504 0 0 1 11.7235 2.89z"/>
+                    </svg>
+                  </div>
+                  <div className="chatgpt-text">
+                    <span className="chatgpt-title">GAME RULES</span>
+                    <span className="chatgpt-sub">Ask ChatGPT AI ↗</span>
+                  </div>
+                </a>
               </div>
             </div>
 
-            <div className="w-full max-w-[320px] flex justify-start mt-3">
-              <a
-                href="https://chatgpt.com/?prompt=Please+search+https%3A%2F%2F16-bead-game.raxzen.in%2F+and+search+%2216+Bead%22+or+%2216+Ghuti%22.+Give+me+a+short%2C+clean%2C+point-to-point+answer+covering%3A+1.+What+the+game+is%2C+2.+Rules%2C+3.+How+to+play%2C+4.+Piece+movement%2C+5.+Capturing%2C+6.+How+to+win%2C+7.+Key+strategies%2C+8.+Main+features%2C+9.+Future+potential.+Use+only+verified+information.+Keep+each+point+brief+and+do+not+give+a+long+explanation."
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rule-preview-chatgpt"
-                title="Ask ChatGPT for 16 Bead Game Rules"
-              >
-                <div className="chatgpt-logo-wrap">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                    <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558l-5.8144-3.3543 2.0201-1.1685a.0757.0757 0 0 1-.071 0l4.8303 2.7865a4.4944 4.4944 0 0 1-.5015 8.1001v-5.6868a.7853.7853 0 0 0-.6055-.677zm2.2992-3.1332l-.142-.0852-4.783-2.7582a.7712.7712 0 0 0-.7806 0l-5.8428 3.3685v-2.3324a.0804.0804 0 0 1 .0332-.0615l4.816-2.7818a4.4992 4.4992 0 0 1 6.6754 4.6508zm-12.0158-5.732a4.4755 4.4755 0 0 1 2.8764 1.0408l-.1419.0804-4.7783 2.7582a.7948.7948 0 0 0-.3927.6813v6.7369l-2.02-1.1686a.071.071 0 0 1-.038-.052V6.7571A4.504 4.504 0 0 1 11.7235 2.89z"/>
-                  </svg>
-                </div>
-                <div className="chatgpt-text">
-                  <span className="chatgpt-title">GAME RULES</span>
-                  <span className="chatgpt-sub">Ask ChatGPT AI ↗</span>
-                </div>
-              </a>
+            {/* About & Policies Links at Bottom of 100vh Screen */}
+            <div className="flex gap-4 items-center justify-center pt-2 pb-2">
+              <button className="about-link-btn" onClick={() => setShowAboutModal(true)}>
+                About &amp; Rules
+              </button>
+              <span className="text-amber-800/60">•</span>
+              <button className="about-link-btn" onClick={() => setShowPolicyModal(true)}>
+                All Policies
+              </button>
             </div>
           </div>
 
-          <div className="flex gap-4 items-center justify-center pb-2">
-            <button className="about-link-btn" onClick={() => setShowAboutModal(true)}>
-              About &amp; Rules
-            </button>
-            <span className="text-amber-800/60">•</span>
-            <button className="about-link-btn" onClick={() => setShowPolicyModal(true)}>
-              All Policies
-            </button>
+          {/* Invisible Box / Long Extra Space below About & Rules / All Policies */}
+          <div className="w-full shrink-0" style={{ height: '280px', pointerEvents: 'none' }} />
+
+          {/* Ad banner at the very bottom below the long invisible box */}
+          <div className="w-full shrink-0 flex flex-col items-center justify-center pt-2 pb-10">
+            <iframe
+              title="Advertisement"
+              srcDoc={`
+                <!DOCTYPE html>
+                <html>
+                  <head>
+                    <meta charset="utf-8">
+                    <style>
+                      body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; background: transparent; }
+                    </style>
+                  </head>
+                  <body>
+                    <script type="text/javascript">
+                      atOptions = {
+                        'key' : '8b1e40d7bd9028cdfe79e13bc8922c3d',
+                        'format' : 'iframe',
+                        'height' : 50,
+                        'width' : 320,
+                        'params' : {}
+                      };
+                    </script>
+                    <script type="text/javascript" src="https://www.highperformanceformat.com/8b1e40d7bd9028cdfe79e13bc8922c3d/invoke.js"></script>
+                  </body>
+                </html>
+              `}
+              width={320}
+              height={50}
+              style={{ border: 'none', overflow: 'hidden', background: 'transparent' }}
+            />
           </div>
         </div>
       )}

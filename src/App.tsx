@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { soundManager } from './utils/audio';
 
 // Standard Board Coordinates (37 Points)
 const COORDS = [
@@ -136,6 +137,22 @@ const TwoUsersIcon = () => (
   </svg>
 );
 
+const VolumeOnIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+  </svg>
+);
+
+const VolumeOffIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+    <line x1="23" y1="9" x2="17" y2="15" />
+    <line x1="17" y1="9" x2="23" y2="15" />
+  </svg>
+);
+
 export default function App() {
   const [showMenu, setShowMenu] = useState<boolean>(true);
   const [gameMode, setGameMode] = useState<GameMode>('vs_computer');
@@ -145,6 +162,7 @@ export default function App() {
   const [hasBonusTurn, setHasBonusTurn] = useState<boolean>(false);
   const [statusText, setStatusText] = useState<string>('Your Move');
   const [gameOver, setGameOver] = useState<boolean>(false);
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
 
   // PWA Install Prompt state
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -221,16 +239,20 @@ export default function App() {
     if (p2Count === 0) {
       if (mode === 'vs_computer') {
         setStatusText('Victory! You captured all 16 opponent beads!');
+        soundManager.playWin();
       } else {
         setStatusText('Player 1 (Ivory) Wins! All opponent beads captured!');
+        soundManager.playWin();
       }
       setGameOver(true);
       return true;
     } else if (p1Count === 0) {
       if (mode === 'vs_computer') {
         setStatusText('Computer Won!');
+        soundManager.playLoss();
       } else {
         setStatusText('Player 2 (Black) Wins! All opponent beads captured!');
+        soundManager.playWin();
       }
       setGameOver(true);
       return true;
@@ -238,8 +260,10 @@ export default function App() {
       if (mode === 'vs_computer') {
         if (currentTurn === 1) {
           setStatusText('No moves available! Computer Wins!');
+          soundManager.playLoss();
         } else {
           setStatusText('Computer is completely blocked! You Win!');
+          soundManager.playWin();
         }
       } else {
         if (currentTurn === 1) {
@@ -247,6 +271,7 @@ export default function App() {
         } else {
           setStatusText('Player 2 is completely blocked! Player 1 Wins!');
         }
+        soundManager.playWin();
       }
       setGameOver(true);
       return true;
@@ -255,6 +280,7 @@ export default function App() {
   }, [hasAnyLegalMoves]);
 
   const startGame = (mode: GameMode) => {
+    soundManager.playGameStart();
     setGameMode(mode);
     setShowMenu(false);
     const newB = createInitialBoard();
@@ -267,6 +293,7 @@ export default function App() {
   };
 
   const initGame = () => {
+    soundManager.playGameStart();
     const newB = createInitialBoard();
     setBoard(newB);
     setTurn(1);
@@ -278,6 +305,7 @@ export default function App() {
 
   // Execute a Capture Jump Move (Awards Bonus Turn)
   const executeCapture = useCallback((from: number, over: number, to: number, playerTurn: number) => {
+    soundManager.playCapture();
     setBoard(prevBoard => {
       const nextBoard = [...prevBoard];
       nextBoard[to] = playerTurn;
@@ -310,6 +338,7 @@ export default function App() {
 
   // Execute a Simple Step Move (Consumes Turn)
   const executeSimpleMove = useCallback((from: number, to: number, playerTurn: number) => {
+    soundManager.playMove();
     setBoard(prevBoard => {
       const nextBoard = [...prevBoard];
       nextBoard[to] = playerTurn;
@@ -393,6 +422,7 @@ export default function App() {
 
     // Select Player's Bead
     if (board[i] === turn) {
+      soundManager.playSelect();
       setSelected(i);
       return;
     }
@@ -406,8 +436,17 @@ export default function App() {
         executeCapture(selected, matchedJump.over, matchedJump.to, turn);
       } else if (ADJ[selected].includes(i)) {
         executeSimpleMove(selected, i, turn);
+      } else {
+        soundManager.playInvalid();
       }
+    } else {
+      soundManager.playInvalid();
     }
+  };
+
+  const handleToggleSound = () => {
+    const enabled = soundManager.toggleSound();
+    setSoundEnabled(enabled);
   };
 
   const p1Count = board.filter(v => v === 1).length;
@@ -1148,11 +1187,11 @@ export default function App() {
 
             {/* About & Policies Links at Bottom of 100vh Screen */}
             <div className="flex gap-4 items-center justify-center pt-2 pb-2">
-              <button className="about-link-btn" onClick={() => setShowAboutModal(true)}>
+              <button className="about-link-btn" onClick={() => { soundManager.playClick(); setShowAboutModal(true); }}>
                 About &amp; Rules
               </button>
               <span className="text-amber-800/60">•</span>
-              <button className="about-link-btn" onClick={() => setShowPolicyModal(true)}>
+              <button className="about-link-btn" onClick={() => { soundManager.playClick(); setShowPolicyModal(true); }}>
                 All Policies
               </button>
             </div>
@@ -1199,10 +1238,13 @@ export default function App() {
       {/* TOP HEADER */}
       <div className="top-container">
         <div className="nav-bar">
-          <button className="nav-btn" onClick={() => setShowMenu(true)}>
+          <button className="nav-btn" onClick={() => { soundManager.playClick(); setShowMenu(true); }}>
             <HomeIcon /> MODES
           </button>
-          <button className="nav-btn" onClick={() => setShowAboutModal(true)}>
+          <button className="nav-btn" onClick={handleToggleSound} title={soundEnabled ? "Mute Sound" : "Enable Sound"}>
+            {soundEnabled ? <VolumeOnIcon /> : <VolumeOffIcon />} {soundEnabled ? 'SOUND' : 'MUTED'}
+          </button>
+          <button className="nav-btn" onClick={() => { soundManager.playClick(); setShowAboutModal(true); }}>
             RULES
           </button>
           <button className="nav-btn" onClick={initGame}>

@@ -1,0 +1,6 @@
+{
+  "name": "Sholo Guti (16 Beads)",
+  "description": "Authentic 37-node Sholo Guti (১৬ গুটি) traditional board game with AI bot, local 2-player mode, chain captures, sound effects, stats tracking, and Bengali/English support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

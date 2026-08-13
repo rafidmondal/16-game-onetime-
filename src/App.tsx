@@ -146,6 +146,54 @@ export default function App() {
   const [statusText, setStatusText] = useState<string>('Your Move');
   const [gameOver, setGameOver] = useState<boolean>(false);
 
+  // PWA Install Prompt state
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState<boolean>(false);
+  
+  // About & Rules Modal state
+  const [showAboutModal, setShowAboutModal] = useState<boolean>(false);
+  
+  // Policy Modal state
+  const [showPolicyModal, setShowPolicyModal] = useState<boolean>(false);
+
+  // PWA beforeinstallprompt Listener
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBanner(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // Auto show install invitation after 1.5 seconds if available or standalone
+    const timer = setTimeout(() => {
+      if (!window.matchMedia('(display-mode: standalone)').matches) {
+        setShowInstallBanner(true);
+      }
+    }, 1500);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      clearTimeout(timer);
+    };
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+        setShowInstallBanner(false);
+      }
+    } else {
+      alert('To install this app, tap your browser menu and select "Add to Home Screen" or "Install App".');
+      setShowInstallBanner(false);
+    }
+  };
+
+
   // Helper functions
   const getLegalJumps = useCallback((pos: number, playerTurn: number, currentBoard: number[]) => {
     const opp = playerTurn === 1 ? 2 : 1;
@@ -431,7 +479,7 @@ export default function App() {
         .menu-subtitle {
           font-size: 0.85rem;
           color: var(--gold-line);
-          margin-bottom: 32px;
+          margin-bottom: 0;
           text-transform: uppercase;
           letter-spacing: 0.15em;
         }
@@ -439,7 +487,7 @@ export default function App() {
         .mode-cards-container {
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 20px;
           width: 100%;
           max-width: 320px;
         }
@@ -490,26 +538,67 @@ export default function App() {
           line-height: 1.2;
         }
 
-        .rule-preview {
-          margin-top: 36px;
-          max-width: 320px;
-          background: rgba(18, 12, 7, 0.7);
-          border: 1px solid var(--gold-border);
-          border-radius: 12px;
-          padding: 14px 16px;
-          font-size: 0.75rem;
-          color: #c7b599;
-          line-height: 1.45;
-          text-align: left;
+        .rule-preview-chatgpt {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          background: linear-gradient(180deg, #18110a 0%, #0d0905 100%);
+          border: 1px solid #10a37f;
+          border-radius: 16px;
+          padding: 4px 10px 4px 6px;
+          color: #ffffff;
+          text-decoration: none;
+          box-shadow: 0 3px 10px rgba(16, 163, 127, 0.2), 0 2px 5px rgba(0,0,0,0.8);
+          transition: all 0.2s ease;
+          cursor: pointer;
         }
 
-        .rule-preview-title {
+        .rule-preview-chatgpt:hover {
+          background: linear-gradient(180deg, #10a37f 0%, #086b53 100%);
+          border-color: #1dd3a6;
+          box-shadow: 0 4px 14px rgba(16, 163, 127, 0.4);
+          transform: translateY(-1px) scale(1.02);
+        }
+
+        .chatgpt-logo-wrap {
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          background: #10a37f;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #ffffff;
+          flex-shrink: 0;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+        }
+
+        .chatgpt-text {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          line-height: 1.1;
+        }
+
+        .chatgpt-title {
           font-family: var(--serif-font);
           color: var(--gold-bright);
           font-weight: bold;
-          font-size: 0.82rem;
-          margin-bottom: 4px;
-          letter-spacing: 0.05em;
+          font-size: 0.65rem;
+          letter-spacing: 0.04em;
+        }
+
+        .chatgpt-sub {
+          font-size: 0.55rem;
+          color: #a89474;
+          font-weight: 500;
+        }
+
+        .rule-preview-chatgpt:hover .chatgpt-title {
+          color: #ffffff;
+        }
+        .rule-preview-chatgpt:hover .chatgpt-sub {
+          color: #e2f9f2;
         }
 
         /* TOP HEADER */
@@ -794,39 +883,271 @@ export default function App() {
           gap: 6px;
           font-weight: 600;
         }
+
+        .about-link-btn {
+          margin-top: 0;
+          background: transparent;
+          border: none;
+          color: var(--gold-line);
+          font-size: 0.75rem;
+          text-decoration: underline;
+          cursor: pointer;
+          opacity: 0.85;
+          letter-spacing: 0.05em;
+        }
+        .about-link-btn:hover {
+          color: var(--gold-bright);
+          opacity: 1;
+        }
+
+        /* PWA INSTALL POPUP */
+        .pwa-install-popup {
+          position: fixed;
+          bottom: 16px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 90%;
+          max-width: 380px;
+          background: linear-gradient(180deg, #1f160e 0%, #0d0804 100%);
+          border: 1.5px solid var(--gold-frame);
+          border-radius: 14px;
+          padding: 10px 14px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.9), 0 0 15px rgba(226, 180, 83, 0.2);
+          z-index: 100;
+          animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+          from { transform: translate(-50%, 100%); opacity: 0; }
+          to { transform: translate(-50%, 0); opacity: 1; }
+        }
+
+        .pwa-popup-content {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .pwa-popup-icon {
+          font-size: 1.5rem;
+        }
+
+        .pwa-popup-text {
+          flex: 1;
+        }
+
+        .pwa-popup-title {
+          font-size: 0.82rem;
+          font-weight: bold;
+          color: var(--gold-bright);
+        }
+
+        .pwa-popup-desc {
+          font-size: 0.68rem;
+          color: #bfa888;
+        }
+
+        .pwa-install-btn {
+          background: linear-gradient(180deg, #b88d3b 0%, #5e441f 100%);
+          color: #ffffff;
+          border: none;
+          border-radius: 8px;
+          padding: 6px 12px;
+          font-size: 0.72rem;
+          font-weight: bold;
+          cursor: pointer;
+        }
+
+        .pwa-close-btn {
+          background: transparent;
+          border: none;
+          color: #a89474;
+          font-size: 0.9rem;
+          cursor: pointer;
+          padding: 2px 4px;
+        }
+
+        /* ABOUT MODAL OVERLAY */
+        .modal-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.85);
+          backdrop-filter: blur(4px);
+          z-index: 120;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+        }
+
+        .modal-content {
+          background: linear-gradient(180deg, #19110a 0%, #0a0603 100%);
+          border: 1.5px solid var(--gold-frame);
+          border-radius: 16px;
+          width: 100%;
+          max-width: 420px;
+          max-height: 85vh;
+          overflow-y: auto;
+          box-shadow: 0 12px 36px rgba(0,0,0,0.9);
+          color: #e5d8c5;
+          padding: 20px;
+        }
+
+        .modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid var(--gold-border);
+          padding-bottom: 10px;
+          margin-bottom: 14px;
+        }
+
+        .modal-header h2 {
+          font-family: var(--serif-font);
+          font-size: 1.15rem;
+          color: var(--gold-bright);
+          margin: 0;
+        }
+
+        .modal-close {
+          background: transparent;
+          border: none;
+          color: var(--gold-line);
+          font-size: 1.2rem;
+          cursor: pointer;
+        }
+
+        .modal-body h3 {
+          font-family: var(--serif-font);
+          font-size: 0.92rem;
+          color: var(--gold-bright);
+          margin: 14px 0 6px 0;
+        }
+
+        .modal-body p, .modal-body ul {
+          font-size: 0.78rem;
+          line-height: 1.5;
+          color: #c7b599;
+          margin: 0 0 10px 0;
+        }
+
+        .modal-body a {
+          color: var(--gold-bright);
+          text-decoration: underline;
+          word-break: break-all;
+        }
+        .modal-body a:hover {
+          color: #ffffff;
+        }
+
+        .modal-body ul {
+          padding-left: 18px;
+        }
+
+        .modal-body li {
+          margin-bottom: 6px;
+        }
+
+        .modal-footer-brand {
+          margin-top: 20px;
+          padding-top: 10px;
+          border-top: 1px solid var(--gold-border);
+          text-align: center;
+          font-size: 0.7rem;
+          color: var(--gold-line);
+          letter-spacing: 0.05em;
+        }
+
+        .policy-btn-container {
+          margin: 16px 0;
+          text-align: center;
+        }
+
+        .p-btn {
+          background: linear-gradient(180deg, #b88d3b 0%, #5e441f 100%);
+          color: #ffffff;
+          padding: 10px 20px;
+          border: 1.5px solid var(--gold-frame);
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: bold;
+          font-size: 0.82rem;
+          letter-spacing: 0.04em;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          box-shadow: 0 4px 14px rgba(0,0,0,0.6), 0 0 10px rgba(226, 180, 83, 0.2);
+          transition: all 0.2s ease;
+        }
+
+        .p-btn:hover {
+          background: linear-gradient(180deg, #e2b453 0%, #856128 100%);
+          box-shadow: 0 6px 18px rgba(226, 180, 83, 0.4);
+          transform: translateY(-1px);
+        }
+
       `}</style>
 
       {/* HOME / MENU OVERLAY */}
       {showMenu && (
         <div className="menu-overlay">
-          <h1 className="menu-title">SHOLO GUTI</h1>
-          <div className="menu-subtitle">16 BEAD STRATEGY BOARD GAME</div>
+          <div className="pt-4 text-center">
+            <h1 className="menu-title">SHOLO GUTI</h1>
+            <div className="menu-subtitle">16 BEAD STRATEGY BOARD GAME</div>
+          </div>
 
-          <div className="mode-cards-container">
-            <div className="mode-card" onClick={() => startGame('vs_computer')}>
-              <div className="mode-icon">
-                <SingleUserIcon />
+          <div className="my-auto w-full flex flex-col items-center py-4">
+            <div className="mode-cards-container">
+              <div className="mode-card" onClick={() => startGame('vs_computer')}>
+                <div className="mode-icon">
+                  <SingleUserIcon />
+                </div>
+                <div className="mode-info">
+                  <div className="mode-name">Play vs Computer</div>
+                  <div className="mode-desc">Single player game against intelligent AI Bot</div>
+                </div>
               </div>
-              <div className="mode-info">
-                <div className="mode-name">Play vs Computer</div>
-                <div className="mode-desc">Single player game against intelligent AI Bot</div>
+
+              <div className="mode-card" onClick={() => startGame('vs_friend')}>
+                <div className="mode-icon">
+                  <TwoUsersIcon />
+                </div>
+                <div className="mode-info">
+                  <div className="mode-name">Pass & Play (vs Friend)</div>
+                  <div className="mode-desc">2 Players on same device, take turns tapping</div>
+                </div>
               </div>
             </div>
 
-            <div className="mode-card" onClick={() => startGame('vs_friend')}>
-              <div className="mode-icon">
-                <TwoUsersIcon />
-              </div>
-              <div className="mode-info">
-                <div className="mode-name">Pass & Play (vs Friend)</div>
-                <div className="mode-desc">2 Players on same device, take turns tapping</div>
-              </div>
+            <div className="w-full max-w-[320px] flex justify-start mt-3">
+              <a
+                href="https://chatgpt.com/?prompt=Please+search+https%3A%2F%2F16-bead-game.raxzen.in%2F+and+search+%2216+Bead%22+or+%2216+Ghuti%22.+Give+me+a+short%2C+clean%2C+point-to-point+answer+covering%3A+1.+What+the+game+is%2C+2.+Rules%2C+3.+How+to+play%2C+4.+Piece+movement%2C+5.+Capturing%2C+6.+How+to+win%2C+7.+Key+strategies%2C+8.+Main+features%2C+9.+Future+potential.+Use+only+verified+information.+Keep+each+point+brief+and+do+not+give+a+long+explanation."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rule-preview-chatgpt"
+                title="Ask ChatGPT for 16 Bead Game Rules"
+              >
+                <div className="chatgpt-logo-wrap">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                    <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558l-5.8144-3.3543 2.0201-1.1685a.0757.0757 0 0 1-.071 0l4.8303 2.7865a4.4944 4.4944 0 0 1-.5015 8.1001v-5.6868a.7853.7853 0 0 0-.6055-.677zm2.2992-3.1332l-.142-.0852-4.783-2.7582a.7712.7712 0 0 0-.7806 0l-5.8428 3.3685v-2.3324a.0804.0804 0 0 1 .0332-.0615l4.816-2.7818a4.4992 4.4992 0 0 1 6.6754 4.6508zm-12.0158-5.732a4.4755 4.4755 0 0 1 2.8764 1.0408l-.1419.0804-4.7783 2.7582a.7948.7948 0 0 0-.3927.6813v6.7369l-2.02-1.1686a.071.071 0 0 1-.038-.052V6.7571A4.504 4.504 0 0 1 11.7235 2.89z"/>
+                  </svg>
+                </div>
+                <div className="chatgpt-text">
+                  <span className="chatgpt-title">GAME RULES</span>
+                  <span className="chatgpt-sub">Ask ChatGPT AI ↗</span>
+                </div>
+              </a>
             </div>
           </div>
 
-          <div className="rule-preview">
-            <div className="rule-preview-title">GAME RULES</div>
-            Jump over an adjacent opponent bead onto an empty node to capture it. Every capture awards a Free Bonus Move allowing you to capture again or move any bead. Eliminate all 16 opponent beads or block their legal moves to win!
+          <div className="flex gap-4 items-center justify-center pb-2">
+            <button className="about-link-btn" onClick={() => setShowAboutModal(true)}>
+              About &amp; Rules
+            </button>
+            <span className="text-amber-800/60">•</span>
+            <button className="about-link-btn" onClick={() => setShowPolicyModal(true)}>
+              All Policies
+            </button>
           </div>
         </div>
       )}
@@ -836,6 +1157,9 @@ export default function App() {
         <div className="nav-bar">
           <button className="nav-btn" onClick={() => setShowMenu(true)}>
             <HomeIcon /> MODES
+          </button>
+          <button className="nav-btn" onClick={() => setShowAboutModal(true)}>
+            RULES
           </button>
           <button className="nav-btn" onClick={initGame}>
             <RefreshIcon /> RESTART
@@ -933,6 +1257,263 @@ export default function App() {
           </div>
         </div>
       </div>
+
+      {/* PWA INSTALL POPUP BANNER */}
+      {showInstallBanner && (
+        <div className="pwa-install-popup">
+          <div className="pwa-popup-content">
+            <div className="pwa-popup-icon">📱</div>
+            <div className="pwa-popup-text">
+              <div className="pwa-popup-title">Install 16 Bead Game</div>
+              <div className="pwa-popup-desc">Add to Home Screen for fast offline play!</div>
+            </div>
+            <button className="pwa-install-btn" onClick={handleInstallApp}>
+              Install
+            </button>
+            <button className="pwa-close-btn" onClick={() => setShowInstallBanner(false)}>
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ABOUT & RULES MODAL */}
+      {showAboutModal && (
+        <div className="modal-overlay" onClick={() => setShowAboutModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>16 Bead Game (Sholo Guti)</h2>
+              <button className="modal-close" onClick={() => setShowAboutModal(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <h3>🎮 About Bead 16 Game</h3>
+              <p>
+                Bead 16, also known as 16 Guti, is a free online traditional strategy board game from the Raxzen game collection.
+              </p>
+              <p>
+                The game brings the classic strategy of a 16-bead board game into a modern, premium, browser-based experience with a carefully designed board, smooth interactions, visual move guidance, capture mechanics, responsive controls, and a polished tabletop-inspired interface.
+              </p>
+              <p>
+                <strong>The objective is simple:</strong><br />
+                Move your beads strategically, capture your opponent's beads, control the board, and be the last player standing.
+              </p>
+
+              <hr className="my-3 border-amber-900/40" />
+
+              <h3>♟️ Classic 16-Bead Strategy</h3>
+              <p>
+                Bead 16 is built around a larger strategic board containing 37 playable positions connected through a structured network of lines.
+              </p>
+              <p>
+                Each side begins with 16 beads, giving both players a large number of pieces to control and creating considerably more strategic possibilities than smaller board games.
+              </p>
+              <p>The game includes:</p>
+              <ul>
+                <li>16 beads per side</li>
+                <li>37 playable board positions</li>
+                <li>Connected movement paths</li>
+                <li>Capture jumps</li>
+                <li>Bonus moves after captures</li>
+                <li>Legal-move detection</li>
+                <li>Capture indicators</li>
+                <li>Move hints</li>
+                <li>Win and loss detection</li>
+                <li>Restart functionality</li>
+                <li>Live bead-count display</li>
+              </ul>
+              <p>The board structure and movement system are implemented directly within the game logic.</p>
+
+              <hr className="my-3 border-amber-900/40" />
+
+              <h3>🤖 Play Against the Computer</h3>
+              <p>You can challenge the built-in Computer opponent and play a complete single-player match.</p>
+              <p>The computer automatically evaluates available capture moves first and performs a capture whenever one is available. If no capture is available, it selects from available normal moves.</p>
+              <p>This creates an automatic opponent that can continue playing without requiring another person.</p>
+              <p>The computer also supports the game's capture-bonus mechanic, allowing it to continue its turn after a successful capture.</p>
+
+              <hr className="my-3 border-amber-900/40" />
+
+              <h3>👥 Play With a Friend</h3>
+              <p>Two people can play against each other on the same device in Pass & Play mode.</p>
+              <p>This makes Bead 16 suitable for:</p>
+              <ul>
+                <li>Friends</li>
+                <li>Family</li>
+                <li>Local challenges</li>
+                <li>Casual matches</li>
+                <li>Traditional board-game sessions</li>
+                <li>Quick competitive games</li>
+              </ul>
+              <p>Instead of playing only against AI, players can enjoy the strategy directly with another person.</p>
+
+              <hr className="my-3 border-amber-900/40" />
+
+              <h3>⚔️ Capture &amp; Bonus-Move System</h3>
+              <p>Capturing an opponent's bead is one of the most important parts of the gameplay.</p>
+              <p>When a legal jump is available, the game visually highlights the capture position.</p>
+              <p>After a successful capture, the player receives a bonus move, allowing another strategic action.</p>
+              <p>The game therefore rewards players who can recognize opportunities and chain their moves effectively.</p>
+              <p>This creates an important strategic choice: <em>Move normally — or capture and continue your attack?</em></p>
+
+              <hr className="my-3 border-amber-900/40" />
+
+              <h3>🧠 Smart Move Guidance</h3>
+              <p>You don't have to guess where your selected bead can move. When a bead is selected, the game visually indicates:</p>
+              <ul>
+                <li>Available normal moves</li>
+                <li>Available capture positions</li>
+                <li>The selected bead</li>
+                <li>Capture opportunities</li>
+              </ul>
+              <p>Normal legal destinations receive a visual hint, while capture destinations receive a distinct capture indicator.</p>
+
+              <hr className="my-3 border-amber-900/40" />
+
+              <h3>🏆 Multiple Ways to Win</h3>
+              <p>The game checks the board continuously for winning conditions.</p>
+              <p>A player can win by successfully capturing all of the opponent's beads or when an opponent has no legal moves remaining.</p>
+
+              <hr className="my-3 border-amber-900/40" />
+
+              <h3>💎 Premium Tabletop Design</h3>
+              <p>Bead 16 has been designed around a premium traditional board-game aesthetic combining deep dark surroundings, gold board lines, rich wooden textures, ivory and black metallic beads, elegant typography, and animated move indicators.</p>
+
+              <hr className="my-3 border-amber-900/40" />
+
+              <h3>📱 Designed for Mobile &amp; Desktop</h3>
+              <p>Suitable for Smartphones, Tablets, Laptops, and Desktop computers with responsive viewport dimensions and touch optimization.</p>
+
+              <hr className="my-3 border-amber-900/40" />
+
+              <h3>⚡ Simple Controls, Deep Strategy</h3>
+              <p>Select your bead and choose a highlighted legal destination. The game handles underlying movement and capture rules automatically.</p>
+
+              <hr className="my-3 border-amber-900/40" />
+
+              <h3>🔄 Replay &amp; New Games</h3>
+              <p>Once a match ends, the game provides a Start New Game option so players can immediately begin another round.</p>
+
+              <hr className="my-3 border-amber-900/40" />
+
+              <h3>🌍 Built for Players Everywhere</h3>
+              <p>Bead 16 is designed as a browser-based experience that can be enjoyed by players around the world without complicated setup.</p>
+
+              <hr className="my-3 border-amber-900/40" />
+
+              <h3>🚀 Part of the Raxzen Game Collection</h3>
+              <p>Other Raxzen games include:</p>
+              <ul>
+                <li>
+                  ⚔️ <strong>Army Run 3D</strong><br />
+                  <a href="https://army-run-3d-game.raxzen.in/" target="_blank" rel="noopener noreferrer">https://army-run-3d-game.raxzen.in/</a>
+                </li>
+                <li>
+                  ❌⭕ <strong>Tic-Tac-Toe</strong><br />
+                  <a href="https://tic-tac-toe.raxze.in/" target="_blank" rel="noopener noreferrer">https://tic-tac-toe.raxze.in/</a>
+                </li>
+                <li>
+                  🪙 <strong>Toss Heads or Tails</strong><br />
+                  <a href="https://toss-heads-or-tails.raxzen.in/" target="_blank" rel="noopener noreferrer">https://toss-heads-or-tails.raxzen.in/</a>
+                </li>
+                <li>
+                  ♟️ <strong>Bead 3</strong><br />
+                  <a href="https://bead-3-game.raxzen.in/" target="_blank" rel="noopener noreferrer">https://bead-3-game.raxzen.in/</a>
+                </li>
+              </ul>
+
+              <hr className="my-3 border-amber-900/40" />
+
+              <h3>👨💻 Developer &amp; Continuous Development</h3>
+              <p>Bead 16 is developed as part of the Raxzen ecosystem with a long-term development mindset focused on continuous improvement across UI/UX, performance, mobile optimization, security, and gameplay features.</p>
+
+              <hr className="my-3 border-amber-900/40" />
+
+              <h3>🌟 The Raxzen Vision</h3>
+              <p>Raxzen aims to create a growing ecosystem of games, AI products, interactive experiences, creative tools, and useful digital services that are: Free • Modern • Clean • Accessible • Interactive • Useful • Continuously Improving.</p>
+
+              <hr className="my-3 border-amber-900/40" />
+
+              <h3>❓ Frequently Asked Questions</h3>
+              <p><strong>What is Bead 16?</strong><br />Bead 16, also known as 16 Guti, is a traditional-style strategy board game featuring 16 beads per side and a connected multi-position board.</p>
+              <p><strong>Is Bead 16 free?</strong><br />Yes. It is designed as a free browser-based Raxzen game.</p>
+              <p><strong>Can I play against the computer?</strong><br />Yes. Includes a built-in Computer opponent.</p>
+              <p><strong>Can I play with a friend?</strong><br />Yes. Supports local Vs Friend (Pass &amp; Play) on the same device.</p>
+              <p><strong>How many beads does each player have?</strong><br />Each side starts with 16 beads.</p>
+              <p><strong>What happens when I capture a bead?</strong><br />A successful capture awards a bonus move, allowing another move before the turn ends.</p>
+              <p><strong>Does the game show possible moves?</strong><br />Yes. Visual indicators display available normal moves and capture opportunities.</p>
+              <p><strong>How do I win?</strong><br />You win by capturing all opponent beads or leaving the opponent without legal moves.</p>
+
+              <hr className="my-3 border-amber-900/40" />
+
+              <h3>🌐 Developer Links</h3>
+              <p>
+                <strong>Developer Website:</strong><br />
+                <a href="https://rafid-mondal.raxzen.in/" target="_blank" rel="noopener noreferrer">https://rafid-mondal.raxzen.in/</a>
+              </p>
+              <p>
+                <strong>Developer's Other Apps &amp; Services:</strong><br />
+                <a href="https://raxzenapp-p9ksao39.manus.space/" target="_blank" rel="noopener noreferrer">https://raxzenapp-p9ksao39.manus.space/</a>
+              </p>
+              <p>
+                <strong>Bead 16 Game:</strong><br />
+                <a href="https://bead-16-game.raxzen.in/" target="_blank" rel="noopener noreferrer">https://bead-16-game.raxzen.in/</a>
+              </p>
+
+              <hr className="my-3 border-amber-900/40" />
+
+              <h3>📩 Developer &amp; Support</h3>
+              <p>
+                For support, feedback, technical questions, or development requirements:<br />
+                <strong>Email:</strong> <a href="mailto:radidmondal@gmail.com">radidmondal@gmail.com</a>
+              </p>
+
+              {/* Policy Button */}
+              <div className="policy-btn-container">
+                <button className="p-btn" onClick={() => setShowPolicyModal(true)}>
+                  📋 All Policies
+                </button>
+              </div>
+
+              <div className="modal-footer-brand">
+                ♟️ Bead 16 — Classic Strategy, Modern Experience<br />
+                16 Beads • One Board • Endless Strategic Possibilities<br />
+                Powered by Raxzen
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* POLICY POPUP MODAL */}
+      {showPolicyModal && (
+        <div className="modal-overlay" onClick={() => setShowPolicyModal(false)} style={{ zIndex: 200 }}>
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '850px',
+              width: '94%',
+              height: '82vh',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '16px'
+            }}
+          >
+            <div className="modal-header" style={{ marginBottom: '10px', paddingBottom: '8px' }}>
+              <h2>📋 All Policies</h2>
+              <button className="modal-close" onClick={() => setShowPolicyModal(false)}>✕</button>
+            </div>
+            <div style={{ flex: 1, width: '100%', height: '100%', overflow: 'hidden', borderRadius: '8px', background: '#ffffff' }}>
+              <iframe
+                src="https://docs.google.com/document/d/1SDTn5ON6UasWdOBQvwNtQqN8TfL5dUSj/preview"
+                title="Privacy &amp; Terms Policies"
+                style={{ width: '100%', height: '100%', border: 'none' }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
